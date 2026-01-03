@@ -42,9 +42,14 @@ export class JmapClient {
 
     const sessionData = await response.json() as any;
     
+    // Use env var override, or primary mail account, or first account as fallback
+    const accountId = process.env.FASTMAIL_ACCOUNT_ID
+      || sessionData.primaryAccounts?.['urn:ietf:params:jmap:mail']
+      || Object.keys(sessionData.accounts)[0];
+
     this.session = {
       apiUrl: sessionData.apiUrl,
-      accountId: Object.keys(sessionData.accounts)[0],
+      accountId,
       capabilities: sessionData.capabilities,
       downloadUrl: sessionData.downloadUrl,
       uploadUrl: sessionData.uploadUrl
