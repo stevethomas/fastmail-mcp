@@ -41,15 +41,10 @@ export class JmapClient {
     }
 
     const sessionData = await response.json() as any;
-    
-    // Use env var override, or primary mail account, or first account as fallback
-    const accountId = process.env.FASTMAIL_ACCOUNT_ID
-      || sessionData.primaryAccounts?.['urn:ietf:params:jmap:mail']
-      || Object.keys(sessionData.accounts)[0];
 
     this.session = {
       apiUrl: sessionData.apiUrl,
-      accountId,
+      accountId: Object.keys(sessionData.accounts)[0],
       capabilities: sessionData.capabilities,
       downloadUrl: sessionData.downloadUrl,
       uploadUrl: sessionData.uploadUrl
@@ -70,7 +65,7 @@ export class JmapClient {
 
   async makeRequest(request: JmapRequest): Promise<JmapResponse> {
     const session = await this.getSession();
-    
+
     const response = await fetch(session.apiUrl, {
       method: 'POST',
       headers: this.auth.getAuthHeaders(),
@@ -86,7 +81,7 @@ export class JmapClient {
 
   async getMailboxes(): Promise<any[]> {
     const session = await this.getSession();
-    
+
     const request: JmapRequest = {
       using: ['urn:ietf:params:jmap:core', 'urn:ietf:params:jmap:mail'],
       methodCalls: [
@@ -100,9 +95,9 @@ export class JmapClient {
 
   async getEmails(mailboxId?: string, limit: number = 20): Promise<any[]> {
     const session = await this.getSession();
-    
+
     const filter = mailboxId ? { inMailbox: mailboxId } : {};
-    
+
     const request: JmapRequest = {
       using: ['urn:ietf:params:jmap:core', 'urn:ietf:params:jmap:mail'],
       methodCalls: [
@@ -126,7 +121,7 @@ export class JmapClient {
 
   async getEmailById(id: string): Promise<any> {
     const session = await this.getSession();
-    
+
     const request: JmapRequest = {
       using: ['urn:ietf:params:jmap:core', 'urn:ietf:params:jmap:mail'],
       methodCalls: [
@@ -143,22 +138,22 @@ export class JmapClient {
 
     const response = await this.makeRequest(request);
     const result = response.methodResponses[0][1];
-    
+
     if (result.notFound && result.notFound.includes(id)) {
       throw new Error(`Email with ID '${id}' not found`);
     }
-    
+
     const email = result.list[0];
     if (!email) {
       throw new Error(`Email with ID '${id}' not found or not accessible`);
     }
-    
+
     return email;
   }
 
   async getIdentities(): Promise<any[]> {
     const session = await this.getSession();
-    
+
     const request: JmapRequest = {
       using: ['urn:ietf:params:jmap:core', 'urn:ietf:params:jmap:submission'],
       methodCalls: [
@@ -174,7 +169,7 @@ export class JmapClient {
 
   async getDefaultIdentity(): Promise<any> {
     const identities = await this.getIdentities();
-    
+
     // Find the default identity (usually the one that can't be deleted)
     return identities.find((id: any) => id.mayDelete === false) || identities[0];
   }
@@ -201,7 +196,7 @@ export class JmapClient {
     let selectedIdentity;
     if (email.from) {
       // Validate that the from address matches an available identity
-      selectedIdentity = identities.find(id => 
+      selectedIdentity = identities.find(id =>
         id.email.toLowerCase() === email.from?.toLowerCase()
       );
       if (!selectedIdentity) {
@@ -218,7 +213,7 @@ export class JmapClient {
     const mailboxes = await this.getMailboxes();
     const draftsMailbox = mailboxes.find(mb => mb.role === 'drafts') || mailboxes.find(mb => mb.name.toLowerCase().includes('draft'));
     const sentMailbox = mailboxes.find(mb => mb.role === 'sent') || mailboxes.find(mb => mb.name.toLowerCase().includes('sent'));
-    
+
     if (!draftsMailbox) {
       throw new Error('Could not find Drafts mailbox to save email');
     }
@@ -286,19 +281,19 @@ export class JmapClient {
     };
 
     const response = await this.makeRequest(request);
-    
+
     // Check if email creation was successful
     const emailResult = response.methodResponses[0][1];
     if (emailResult.notCreated && emailResult.notCreated.draft) {
       throw new Error('Failed to create email. Please check inputs and try again.');
     }
-    
+
     // Check if email submission was successful
     const submissionResult = response.methodResponses[1][1];
     if (submissionResult.notCreated && submissionResult.notCreated.submission) {
       throw new Error('Failed to submit email. Please try again later.');
     }
-    
+
     return submissionResult.created?.submission?.id || 'unknown';
   }
 
@@ -472,14 +467,14 @@ export class JmapClient {
 
   async getRecentEmails(limit: number = 10, mailboxName: string = 'inbox'): Promise<any[]> {
     const session = await this.getSession();
-    
+
     // Find the specified mailbox (default to inbox)
     const mailboxes = await this.getMailboxes();
-    const targetMailbox = mailboxes.find(mb => 
-      mb.role === mailboxName.toLowerCase() || 
+    const targetMailbox = mailboxes.find(mb =>
+      mb.role === mailboxName.toLowerCase() ||
       mb.name.toLowerCase().includes(mailboxName.toLowerCase())
     );
-    
+
     if (!targetMailbox) {
       throw new Error(`Could not find mailbox: ${mailboxName}`);
     }
@@ -507,9 +502,9 @@ export class JmapClient {
 
   async markEmailRead(emailId: string, read: boolean = true): Promise<void> {
     const session = await this.getSession();
-    
+
     const keywords = read ? { $seen: true } : {};
-    
+
     const request: JmapRequest = {
       using: ['urn:ietf:params:jmap:core', 'urn:ietf:params:jmap:mail'],
       methodCalls: [
@@ -526,7 +521,7 @@ export class JmapClient {
 
     const response = await this.makeRequest(request);
     const result = response.methodResponses[0][1];
-    
+
     if (result.notUpdated && result.notUpdated[emailId]) {
       throw new Error(`Failed to mark email as ${read ? 'read' : 'unread'}.`);
     }
@@ -534,11 +529,11 @@ export class JmapClient {
 
   async deleteEmail(emailId: string): Promise<void> {
     const session = await this.getSession();
-    
+
     // Find the trash mailbox
     const mailboxes = await this.getMailboxes();
     const trashMailbox = mailboxes.find(mb => mb.role === 'trash') || mailboxes.find(mb => mb.name.toLowerCase().includes('trash'));
-    
+
     if (!trashMailbox) {
       throw new Error('Could not find Trash mailbox');
     }
@@ -562,7 +557,7 @@ export class JmapClient {
 
     const response = await this.makeRequest(request);
     const result = response.methodResponses[0][1];
-    
+
     if (result.notUpdated && result.notUpdated[emailId]) {
       throw new Error('Failed to delete email.');
     }
@@ -590,7 +585,7 @@ export class JmapClient {
 
     const response = await this.makeRequest(request);
     const result = response.methodResponses[0][1];
-    
+
     if (result.notUpdated && result.notUpdated[emailId]) {
       throw new Error('Failed to move email.');
     }
@@ -633,13 +628,13 @@ export class JmapClient {
 
     const response = await this.makeRequest(request);
     const email = response.methodResponses[0][1].list[0];
-    
+
     if (!email) {
       throw new Error('Email not found');
     }
 
     // Find attachment by partId or by index
-    let attachment = email.attachments?.find((att: any) => 
+    let attachment = email.attachments?.find((att: any) =>
       att.partId === attachmentId || att.blobId === attachmentId
     );
 
@@ -648,7 +643,7 @@ export class JmapClient {
       const index = parseInt(attachmentId);
       attachment = email.attachments?.[index];
     }
-    
+
     if (!attachment) {
       throw new Error('Attachment not found.');
     }
@@ -682,10 +677,10 @@ export class JmapClient {
     limit?: number;
   }): Promise<any[]> {
     const session = await this.getSession();
-    
+
     // Build JMAP filter object
     const filter: any = {};
-    
+
     if (filters.query) filter.text = filters.query;
     if (filters.from) filter.from = filters.from;
     if (filters.to) filter.to = filters.to;
@@ -728,7 +723,7 @@ export class JmapClient {
 
     // First, check if threadId is actually an email ID and resolve the thread
     let actualThreadId = threadId;
-    
+
     // Try to get the email first to see if we need to resolve thread ID
     try {
       const emailRequest: JmapRequest = {
@@ -741,10 +736,10 @@ export class JmapClient {
           }, 'checkEmail']
         ]
       };
-      
+
       const emailResponse = await this.makeRequest(emailRequest);
       const email = emailResponse.methodResponses[0][1].list[0];
-      
+
       if (email && email.threadId) {
         actualThreadId = email.threadId;
       }
@@ -770,18 +765,18 @@ export class JmapClient {
 
     const response = await this.makeRequest(request);
     const threadResult = response.methodResponses[0][1];
-    
+
     // Check if thread was found
     if (threadResult.notFound && threadResult.notFound.includes(actualThreadId)) {
       throw new Error(`Thread with ID '${actualThreadId}' not found`);
     }
-    
+
     return response.methodResponses[1][1].list;
   }
 
   async getMailboxStats(mailboxId?: string): Promise<any> {
     const session = await this.getSession();
-    
+
     if (mailboxId) {
       // Get stats for specific mailbox
       const request: JmapRequest = {
@@ -842,10 +837,10 @@ export class JmapClient {
 
   async bulkMarkRead(emailIds: string[], read: boolean = true): Promise<void> {
     const session = await this.getSession();
-    
+
     const keywords = read ? { $seen: true } : {};
     const updates: Record<string, any> = {};
-    
+
     emailIds.forEach(id => {
       updates[id] = { keywords };
     });
@@ -862,7 +857,7 @@ export class JmapClient {
 
     const response = await this.makeRequest(request);
     const result = response.methodResponses[0][1];
-    
+
     if (result.notUpdated && Object.keys(result.notUpdated).length > 0) {
       throw new Error('Failed to update some emails.');
     }
@@ -891,7 +886,7 @@ export class JmapClient {
 
     const response = await this.makeRequest(request);
     const result = response.methodResponses[0][1];
-    
+
     if (result.notUpdated && Object.keys(result.notUpdated).length > 0) {
       throw new Error('Failed to move some emails.');
     }
@@ -899,11 +894,11 @@ export class JmapClient {
 
   async bulkDelete(emailIds: string[]): Promise<void> {
     const session = await this.getSession();
-    
+
     // Find the trash mailbox
     const mailboxes = await this.getMailboxes();
     const trashMailbox = mailboxes.find(mb => mb.role === 'trash') || mailboxes.find(mb => mb.name.toLowerCase().includes('trash'));
-    
+
     if (!trashMailbox) {
       throw new Error('Could not find Trash mailbox');
     }
@@ -928,7 +923,7 @@ export class JmapClient {
 
     const response = await this.makeRequest(request);
     const result = response.methodResponses[0][1];
-    
+
     if (result.notUpdated && Object.keys(result.notUpdated).length > 0) {
       throw new Error('Failed to delete some emails.');
     }
