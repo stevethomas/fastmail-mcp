@@ -202,7 +202,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
             },
             mailboxId: {
               type: 'string',
-              description: 'Mailbox ID to save the email to (optional, defaults to Drafts folder)',
+              description: 'Mailbox ID for initial email creation before sending (optional)',
             },
             subject: {
               type: 'string',
@@ -218,6 +218,61 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
             },
           },
           required: ['to', 'subject'],
+        },
+      },
+      {
+        name: 'save_draft',
+        description: 'Save an email as draft without sending',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            to: {
+              type: 'array',
+              items: { type: 'string' },
+              description: 'Recipient email addresses',
+            },
+            cc: {
+              type: 'array',
+              items: { type: 'string' },
+              description: 'CC email addresses (optional)',
+            },
+            bcc: {
+              type: 'array',
+              items: { type: 'string' },
+              description: 'BCC email addresses (optional)',
+            },
+            from: {
+              type: 'string',
+              description: 'Sender email address (optional, defaults to account primary email)',
+            },
+            subject: {
+              type: 'string',
+              description: 'Email subject',
+            },
+            textBody: {
+              type: 'string',
+              description: 'Plain text body (optional)',
+            },
+            htmlBody: {
+              type: 'string',
+              description: 'HTML body (optional)',
+            },
+          },
+          required: ['to', 'subject'],
+        },
+      },
+      {
+        name: 'send_draft',
+        description: 'Send a previously saved draft email',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            emailId: {
+              type: 'string',
+              description: 'ID of the draft email to send',
+            },
+          },
+          required: ['emailId'],
         },
       },
       {
@@ -733,6 +788,56 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         };
       }
 
+      case 'save_draft': {
+        const { to, cc, bcc, from, subject, textBody, htmlBody } = args as any;
+        if (!to || !Array.isArray(to) || to.length === 0) {
+          throw new McpError(ErrorCode.InvalidParams, 'to field is required and must be a non-empty array');
+        }
+        if (!subject) {
+          throw new McpError(ErrorCode.InvalidParams, 'subject is required');
+        }
+        if (!textBody && !htmlBody) {
+          throw new McpError(ErrorCode.InvalidParams, 'Either textBody or htmlBody is required');
+        }
+
+        const draftId = await client.saveDraft({
+          to,
+          cc,
+          bcc,
+          from,
+          subject,
+          textBody,
+          htmlBody,
+        });
+
+        return {
+          content: [
+            {
+              type: 'text',
+              text: `Draft saved successfully. Email ID: ${draftId}`,
+            },
+          ],
+        };
+      }
+
+      case 'send_draft': {
+        const { emailId } = args as any;
+        if (!emailId) {
+          throw new McpError(ErrorCode.InvalidParams, 'emailId is required');
+        }
+
+        const submissionId = await client.sendDraft(emailId);
+
+        return {
+          content: [
+            {
+              type: 'text',
+              text: `Draft sent successfully. Submission ID: ${submissionId}`,
+            },
+          ],
+        };
+      }
+
       case 'search_emails': {
         const { query, limit = 20 } = args as any;
         if (!query) {
@@ -1136,8 +1241,8 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
           email: {
             available: true,
             functions: [
-              'list_mailboxes', 'list_emails', 'get_email', 'send_email', 'search_emails',
-              'get_recent_emails', 'mark_email_read', 'delete_email', 'move_email',
+              'list_mailboxes', 'list_emails', 'get_email', 'send_email', 'save_draft', 'send_draft',
+              'search_emails', 'get_recent_emails', 'mark_email_read', 'delete_email', 'move_email',
               'get_email_attachments', 'download_attachment', 'advanced_search', 'get_thread',
               'get_mailbox_stats', 'get_account_summary', 'bulk_mark_read', 'bulk_move', 'bulk_delete'
             ]
