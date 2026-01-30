@@ -10,6 +10,7 @@ import {
 import { FastmailAuth, FastmailConfig } from './auth.js';
 import { JmapClient, JmapRequest } from './jmap-client.js';
 import { ContactsCalendarClient } from './contacts-calendar.js';
+import { CalDAVCalendarClient } from './caldav-client.js';
 
 const server = new Server(
   {
@@ -25,6 +26,7 @@ const server = new Server(
 
 let jmapClient: JmapClient | null = null;
 let contactsCalendarClient: ContactsCalendarClient | null = null;
+let caldavClient: CalDAVCalendarClient | null = null;
 
 function resolveEnvValue(...keys: string[]): string | undefined {
   const isPlaceholder = (val: string) => /\$\{[^}]+\}/.test(val.trim());
@@ -130,6 +132,29 @@ function initializeContactsCalendarClient(): ContactsCalendarClient {
   const auth = new FastmailAuth(config);
   contactsCalendarClient = new ContactsCalendarClient(auth);
   return contactsCalendarClient;
+}
+
+function initializeCalDAVClient(): CalDAVCalendarClient | null {
+  if (caldavClient) return caldavClient;
+
+  const token = resolveEnvValue(
+    'FASTMAIL_CALDAV_API_TOKEN',
+    'USER_CONFIG_FASTMAIL_CALDAV_API_TOKEN',
+  );
+  if (!token) return null;
+
+  const username = resolveEnvValue(
+    'FASTMAIL_CALDAV_USERNAME',
+    'USER_CONFIG_FASTMAIL_CALDAV_USERNAME',
+  ) || 'steve@codinglabs.com.au';
+
+  caldavClient = new CalDAVCalendarClient({
+    username,
+    password: token,
+    serverUrl: 'https://caldav.fastmail.com',
+  });
+
+  return caldavClient;
 }
 
 server.setRequestHandler(ListToolsRequestSchema, async () => {
@@ -820,30 +845,26 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       }
 
       case 'list_calendars': {
+        const caldav = initializeCalDAVClient();
+        if (caldav) {
+          const calendars = await caldav.getCalendars();
+          return { content: [{ type: 'text', text: JSON.stringify(calendars, null, 2) }] };
+        }
         const contactsClient = initializeContactsCalendarClient();
         const calendars = await contactsClient.getCalendars();
-        return {
-          content: [
-            {
-              type: 'text',
-              text: JSON.stringify(calendars, null, 2),
-            },
-          ],
-        };
+        return { content: [{ type: 'text', text: JSON.stringify(calendars, null, 2) }] };
       }
 
       case 'list_calendar_events': {
         const { calendarId, limit = 50 } = args as any;
+        const caldav = initializeCalDAVClient();
+        if (caldav) {
+          const events = await caldav.getCalendarEvents(calendarId, limit);
+          return { content: [{ type: 'text', text: JSON.stringify(events, null, 2) }] };
+        }
         const contactsClient = initializeContactsCalendarClient();
         const events = await contactsClient.getCalendarEvents(calendarId, limit);
-        return {
-          content: [
-            {
-              type: 'text',
-              text: JSON.stringify(events, null, 2),
-            },
-          ],
-        };
+        return { content: [{ type: 'text', text: JSON.stringify(events, null, 2) }] };
       }
 
       case 'get_calendar_event': {
@@ -851,16 +872,14 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         if (!eventId) {
           throw new McpError(ErrorCode.InvalidParams, 'eventId is required');
         }
+        const caldav = initializeCalDAVClient();
+        if (caldav) {
+          const event = await caldav.getCalendarEventById(eventId);
+          return { content: [{ type: 'text', text: JSON.stringify(event, null, 2) }] };
+        }
         const contactsClient = initializeContactsCalendarClient();
         const event = await contactsClient.getCalendarEventById(eventId);
-        return {
-          content: [
-            {
-              type: 'text',
-              text: JSON.stringify(event, null, 2),
-            },
-          ],
-        };
+        return { content: [{ type: 'text', text: JSON.stringify(event, null, 2) }] };
       }
 
       case 'create_calendar_event': {
