@@ -334,7 +334,16 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
               description: 'Maximum number of events to return (default: 50)',
               default: 50,
             },
+            startDate: {
+              type: 'string',
+              description: 'Start of date range in ISO 8601 format (e.g. 2026-01-26)',
+            },
+            endDate: {
+              type: 'string',
+              description: 'End of date range in ISO 8601 format (e.g. 2026-02-02)',
+            },
           },
+          required: ['startDate', 'endDate'],
         },
       },
       {
@@ -856,10 +865,10 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       }
 
       case 'list_calendar_events': {
-        const { calendarId, limit = 50 } = args as any;
+        const { calendarId, limit = 50, startDate, endDate } = args as any;
         const caldav = initializeCalDAVClient();
         if (caldav) {
-          const events = await caldav.getCalendarEvents(calendarId, limit);
+          const events = await caldav.getCalendarEvents(calendarId, limit, startDate, endDate);
           return { content: [{ type: 'text', text: JSON.stringify(events, null, 2) }] };
         }
         const contactsClient = initializeContactsCalendarClient();

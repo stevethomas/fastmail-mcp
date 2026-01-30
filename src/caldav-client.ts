@@ -54,7 +54,7 @@ export class CalDAVCalendarClient {
     }));
   }
 
-  async getCalendarEvents(calendarId?: string, limit: number = 50): Promise<any[]> {
+  async getCalendarEvents(calendarId?: string, limit: number = 50, startDate?: string, endDate?: string): Promise<any[]> {
     const client = await this.getClient();
     const calendars = await client.fetchCalendars();
 
@@ -69,7 +69,13 @@ export class CalDAVCalendarClient {
     const allEvents: CalendarEvent[] = [];
 
     for (const calendar of target) {
-      const objects = await client.fetchCalendarObjects({ calendar });
+      const fetchOptions: any = { calendar };
+      if (startDate && endDate) {
+        const start = startDate.includes('T') ? startDate : `${startDate}T00:00:00`;
+        const end = endDate.includes('T') ? endDate : `${endDate}T23:59:59`;
+        fetchOptions.timeRange = { start, end };
+      }
+      const objects = await client.fetchCalendarObjects(fetchOptions);
 
       for (const obj of objects) {
         const parsed = parseICS(obj.data as string);
