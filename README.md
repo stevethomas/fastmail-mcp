@@ -4,7 +4,7 @@ MCP server for Fastmail — email, contacts, and calendars via JMAP and CalDAV.
 
 Fork of [MadLlama25/fastmail-mcp](https://github.com/MadLlama25/fastmail-mcp) with:
 
-- **CalDAV calendar support** — tsdav-based with date range filtering and recurring event expansion. JMAP calendar access requires contacting Fastmail support; CalDAV works self-service.
+- **CalDAV calendar support** — tsdav-based with date range filtering and recurring event expansion. Fastmail's [JMAP calendar support is coming soon](https://www.fastmail.com/dev/) — this fork uses CalDAV as a self-service workaround until then.
 - **Snooze metadata** — `snoozed` property exposed on email responses (includes `until` date for unsnooze scheduling).
 - **Native fetch** — dropped `node-fetch` dependency (Node 18+).
 
@@ -17,9 +17,9 @@ Two separate tokens are required:
 | Token | Scope | How to get |
 |-------|-------|------------|
 | `FASTMAIL_API_TOKEN` | JMAP (email, contacts) | Settings → Privacy & Security → API Tokens |
-| `FASTMAIL_CALDAV_API_TOKEN` | CalDAV (calendars) | App password from https://www.fastmail.com/dev/ |
+| `FASTMAIL_CALDAV_API_TOKEN` | CalDAV (calendars) | Settings → Privacy & Security → Manage app passwords and access → create token with CalDAV scope |
 
-The JMAP token **cannot** access calendars — it returns "Disallowed". Calendar operations use CalDAV with basic auth.
+The JMAP token **cannot** access calendars — it returns "Disallowed". Calendar operations use CalDAV with basic auth until Fastmail ships JMAP calendar support.
 
 ### Install
 
