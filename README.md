@@ -5,7 +5,6 @@ MCP server for Fastmail — email, contacts, and calendars via JMAP and CalDAV.
 Fork of [MadLlama25/fastmail-mcp](https://github.com/MadLlama25/fastmail-mcp) with:
 
 - **CalDAV calendar support** — tsdav-based with date range filtering and recurring event expansion. Fastmail's [JMAP calendar support is coming soon](https://www.fastmail.com/dev/) — this fork uses CalDAV as a self-service workaround until then.
-- **Snooze metadata** — `snoozedUntil` property exposed on email responses via the `urn:ietf:params:jmap:mail:snooze` capability (RFC 9042).
 - **Native fetch** — dropped `node-fetch` dependency (Node 18+).
 
 ## Setup
@@ -51,7 +50,7 @@ npm run build
 
 ### Highlights
 
-- **get_recent_emails** — quick inbox scan with snooze metadata
+- **get_recent_emails** — quick inbox scan
 - **advanced_search** — multi-criteria filtering (sender, date, attachments, read status)
 - **send_email** — text/HTML with proper draft/sent handling
 - **list_calendar_events** — CalDAV-backed with date range support
