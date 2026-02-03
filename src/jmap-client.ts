@@ -104,7 +104,7 @@ export class JmapClient {
     const filter = mailboxId ? { inMailbox: mailboxId } : {};
     
     const request: JmapRequest = {
-      using: ['urn:ietf:params:jmap:core', 'urn:ietf:params:jmap:mail'],
+      using: ['urn:ietf:params:jmap:core', 'urn:ietf:params:jmap:mail', 'urn:ietf:params:jmap:mail:snooze'],
       methodCalls: [
         ['Email/query', {
           accountId: session.accountId,
@@ -115,7 +115,7 @@ export class JmapClient {
         ['Email/get', {
           accountId: session.accountId,
           '#ids': { resultOf: 'query', name: 'Email/query', path: '/ids' },
-          properties: ['id', 'subject', 'from', 'to', 'receivedAt', 'preview', 'hasAttachment', 'snoozed']
+          properties: ['id', 'subject', 'from', 'to', 'receivedAt', 'preview', 'hasAttachment', 'snoozedUntil']
         }, 'emails']
       ]
     };
@@ -317,7 +317,7 @@ export class JmapClient {
     }
 
     const request: JmapRequest = {
-      using: ['urn:ietf:params:jmap:core', 'urn:ietf:params:jmap:mail'],
+      using: ['urn:ietf:params:jmap:core', 'urn:ietf:params:jmap:mail', 'urn:ietf:params:jmap:mail:snooze'],
       methodCalls: [
         ['Email/query', {
           accountId: session.accountId,
@@ -328,7 +328,7 @@ export class JmapClient {
         ['Email/get', {
           accountId: session.accountId,
           '#ids': { resultOf: 'query', name: 'Email/query', path: '/ids' },
-          properties: ['id', 'subject', 'from', 'to', 'receivedAt', 'preview', 'hasAttachment', 'keywords', 'snoozed']
+          properties: ['id', 'subject', 'from', 'to', 'receivedAt', 'preview', 'hasAttachment', 'keywords', 'snoozedUntil']
         }, 'emails']
       ]
     };
@@ -535,7 +535,7 @@ export class JmapClient {
     }
 
     const request: JmapRequest = {
-      using: ['urn:ietf:params:jmap:core', 'urn:ietf:params:jmap:mail'],
+      using: ['urn:ietf:params:jmap:core', 'urn:ietf:params:jmap:mail', 'urn:ietf:params:jmap:mail:snooze'],
       methodCalls: [
         ['Email/query', {
           accountId: session.accountId,
@@ -546,7 +546,7 @@ export class JmapClient {
         ['Email/get', {
           accountId: session.accountId,
           '#ids': { resultOf: 'query', name: 'Email/query', path: '/ids' },
-          properties: ['id', 'subject', 'from', 'to', 'cc', 'receivedAt', 'preview', 'hasAttachment', 'keywords', 'threadId', 'snoozed']
+          properties: ['id', 'subject', 'from', 'to', 'cc', 'receivedAt', 'preview', 'hasAttachment', 'keywords', 'threadId', 'snoozedUntil']
         }, 'emails']
       ]
     };
@@ -586,7 +586,7 @@ export class JmapClient {
 
     // Use Thread/get with the resolved thread ID
     const request: JmapRequest = {
-      using: ['urn:ietf:params:jmap:core', 'urn:ietf:params:jmap:mail'],
+      using: ['urn:ietf:params:jmap:core', 'urn:ietf:params:jmap:mail', 'urn:ietf:params:jmap:mail:snooze'],
       methodCalls: [
         ['Thread/get', {
           accountId: session.accountId,
@@ -595,7 +595,7 @@ export class JmapClient {
         ['Email/get', {
           accountId: session.accountId,
           '#ids': { resultOf: 'getThread', name: 'Thread/get', path: '/list/*/emailIds' },
-          properties: ['id', 'subject', 'from', 'to', 'cc', 'receivedAt', 'preview', 'hasAttachment', 'keywords', 'threadId', 'snoozed']
+          properties: ['id', 'subject', 'from', 'to', 'cc', 'receivedAt', 'preview', 'hasAttachment', 'keywords', 'threadId', 'snoozedUntil']
         }, 'emails']
       ]
     };
