@@ -59,13 +59,11 @@ export class JmapClient {
   }
 
   async getUserEmail(): Promise<string> {
-    try {
-      const identity = await this.getDefaultIdentity();
-      return identity?.email || 'user@example.com';
-    } catch (error) {
-      // Fallback if Identity/get is not available
-      return 'user@example.com';
+    const identity = await this.getDefaultIdentity();
+    if (!identity?.email) {
+      throw new Error('Could not resolve user email from JMAP identities');
     }
+    return identity.email;
   }
 
   async makeRequest(request: JmapRequest): Promise<JmapResponse> {

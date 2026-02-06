@@ -11,21 +11,13 @@ Fork of [MadLlama25/fastmail-mcp](https://github.com/MadLlama25/fastmail-mcp) wi
 
 ### Tokens
 
-Two separate tokens are required:
-
-| Token | Scope | How to get |
-|-------|-------|------------|
-| `FASTMAIL_API_TOKEN` | JMAP (email, contacts) | Settings → Privacy & Security → API Tokens |
-| `FASTMAIL_CALDAV_API_TOKEN` | CalDAV (calendars) | Settings → Privacy & Security → Manage app passwords and access → create token with CalDAV scope |
+| Token | Required | Scope | How to get |
+|-------|----------|-------|------------|
+| `FASTMAIL_API_TOKEN` | Yes | JMAP (email, contacts) | Settings → Privacy & Security → API Tokens |
+| `FASTMAIL_CALDAV_API_TOKEN` | No | CalDAV (calendars) | Settings → Privacy & Security → Manage app passwords and access → create token with CalDAV scope |
+| `FASTMAIL_CALDAV_USERNAME` | No | Your Fastmail email address | Required if `FASTMAIL_CALDAV_API_TOKEN` is set |
 
 The JMAP token **cannot** access calendars — it returns "Disallowed". Calendar operations use CalDAV with basic auth until Fastmail ships JMAP calendar support.
-
-### Install
-
-```bash
-npm install
-npm run build
-```
 
 ### MCP config
 
@@ -33,11 +25,12 @@ npm run build
 {
   "mcpServers": {
     "fastmail": {
-      "command": "node",
-      "args": ["/path/to/fastmail-mcp/dist/index.js"],
+      "command": "npx",
+      "args": ["--yes", "github:stevethomas/fastmail-mcp"],
       "env": {
         "FASTMAIL_API_TOKEN": "...",
-        "FASTMAIL_CALDAV_API_TOKEN": "..."
+        "FASTMAIL_CALDAV_API_TOKEN": "...",
+        "FASTMAIL_CALDAV_USERNAME": "you@fastmail.com"
       }
     }
   }
@@ -70,8 +63,9 @@ src/
 ## Development
 
 ```bash
+npm install
+npm run build
 npm run dev    # watch mode
-npm run build  # production build
 ```
 
 ## License

@@ -146,7 +146,13 @@ function initializeCalDAVClient(): CalDAVCalendarClient | null {
   const username = resolveEnvValue(
     'FASTMAIL_CALDAV_USERNAME',
     'USER_CONFIG_FASTMAIL_CALDAV_USERNAME',
-  ) || 'steve@codinglabs.com.au';
+  );
+  if (!username) {
+    throw new McpError(
+      ErrorCode.InvalidRequest,
+      'FASTMAIL_CALDAV_USERNAME is required when FASTMAIL_CALDAV_API_TOKEN is set'
+    );
+  }
 
   caldavClient = new CalDAVCalendarClient({
     username,
