@@ -26,12 +26,7 @@ The JMAP token **cannot** access calendars — it returns "Disallowed". Calendar
   "mcpServers": {
     "fastmail": {
       "command": "npx",
-      "args": ["--yes", "github:stevethomas/fastmail-mcp"],
-      "env": {
-        "FASTMAIL_API_TOKEN": "...",
-        "FASTMAIL_CALDAV_API_TOKEN": "...",
-        "FASTMAIL_CALDAV_USERNAME": "you@fastmail.com"
-      }
+      "args": ["--yes", "github:stevethomas/fastmail-mcp"]
     }
   }
 }
