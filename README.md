@@ -11,11 +11,15 @@ Fork of [MadLlama25/fastmail-mcp](https://github.com/MadLlama25/fastmail-mcp) wi
 
 ### Tokens
 
-| Token | Required | Scope | How to get |
-|-------|----------|-------|------------|
-| `FASTMAIL_API_TOKEN` | Yes | JMAP (email, contacts) | Settings → Privacy & Security → API Tokens |
-| `FASTMAIL_CALDAV_API_TOKEN` | No | CalDAV (calendars) | Settings → Privacy & Security → Manage app passwords and access → create token with CalDAV scope |
-| `FASTMAIL_CALDAV_USERNAME` | No | Your Fastmail email address | Required if `FASTMAIL_CALDAV_API_TOKEN` is set |
+| Variable | Required | What it is |
+|----------|----------|------------|
+| `FASTMAIL_API_TOKEN` | Yes | API token with `urn:ietf:params:jmap:mail` scope (read-only is fine) |
+| `FASTMAIL_CALDAV_API_TOKEN` | No | App password with CalDAV permissions |
+| `FASTMAIL_CALDAV_USERNAME` | No | Your Fastmail email address — required if `FASTMAIL_CALDAV_API_TOKEN` is set |
+
+**Creating the API token** — Settings → Privacy & Security → API Tokens → New API Token. Grant `urn:ietf:params:jmap:mail` (and optionally contacts/submission scopes).
+
+**Creating the app password** — Settings → Privacy & Security → Manage app passwords and access → New app password. Select "CalDAV" as the access type.
 
 The JMAP token **cannot** access calendars — it returns "Disallowed". Calendar operations use CalDAV with basic auth until Fastmail ships JMAP calendar support.
 
